@@ -18,8 +18,8 @@ def load_model():
 generator = load_model()
 
 # Judul dan Deskripsi aplikasi
-st.title("GPT-Neo AI Assistant")
-st.write("Selamat datang di GPT-Neo AI Assistant! Tulis pesan di bawah untuk mulai berbicara dengan asisten.")
+st.title(" AI Assistant Mabinumi")
+st.write("Selamat datang di AI Assistant Mabinumi! Tulis pesan di bawah untuk mulai berbicara dengan asisten.")
 
 # Menyimpan percakapan dalam session state
 if 'messages' not in st.session_state:
