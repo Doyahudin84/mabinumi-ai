@@ -1,37 +1,50 @@
 import streamlit as st
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
 
-# Inisialisasi model GPT-Neo dari Hugging Face
-@st.cache_resource  # Cache untuk menyimpan model dan tokenizer agar tidak dimuat ulang
+# Load GPT-Neo Model dan Tokenizer
+@st.cache_resource
 def load_model():
-    # Menggunakan GPT-Neo 1.3B
     model = GPT2LMHeadModel.from_pretrained("EleutherAI/gpt-neo-1.3B")
     tokenizer = GPT2Tokenizer.from_pretrained("EleutherAI/gpt-neo-1.3B")
-    generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
+    generator = pipeline("text-generation", model=model, tokenizer=tokenizer)
     return generator
 
-# Load model
 generator = load_model()
 
-# Streamlit Interface
+# Judul dan Deskripsi aplikasi
 st.title("GPT-Neo AI Assistant")
-st.write("Masukkan teks untuk mendapatkan respon dari GPT-Neo.")
+st.write("Selamat datang di GPT-Neo AI Assistant! Tulis pesan di bawah untuk mulai berbicara dengan asisten.")
 
-# User input untuk prompt
-user_input = st.text_area("Tulis teks di sini:", "")
+# Menyimpan percakapan dalam session state
+if 'messages' not in st.session_state:
+    st.session_state.messages = []
 
-# Menampilkan hasil jika ada input
+# Input dari Pengguna
+user_input = st.text_input("Masukkan Pesan: ")
+
+# Menambahkan pesan pengguna ke history
 if user_input:
-    with st.spinner("Menghasilkan teks..."):
-        result = generator(user_input, max_length=100, num_return_sequences=1)
-        generated_text = result[0]['generated_text']
-        st.subheader("Hasil Output:")
-        st.write(generated_text)
+    st.session_state.messages.append({"role": "user", "content": user_input})
 
-# Menambahkan penjelasan atau instruksi tambahan
+    # Proses dan generate response dari GPT-Neo
+    with st.spinner("Menghasilkan jawaban..."):
+        result = generator(user_input, max_length=100, num_return_sequences=1)
+        bot_response = result[0]['generated_text']
+
+    # Menambahkan respons model ke percakapan
+    st.session_state.messages.append({"role": "bot", "content": bot_response})
+
+# Menampilkan chat history
+for msg in st.session_state.messages:
+    if msg["role"] == "user":
+        st.chat_message("user").markdown(msg["content"])
+    else:
+        st.chat_message("assistant").markdown(msg["content"])
+
+# Instruksi tambahan untuk pengguna
 st.markdown("""
-    **Cara Kerja**:
-    1. Masukkan prompt atau teks apapun di area input.
-    2. GPT-Neo akan menghasilkan teks berdasarkan prompt tersebut.
-    3. Anda bisa eksperimen dengan berbagai jenis input untuk melihat hasil yang berbeda.
+    **Cara Menggunakan**:
+    1. Tulis pesan di kolom input untuk berbicara dengan asisten.
+    2. Asisten akan memberikan respons berdasarkan pesan yang Anda kirimkan.
+    3. Anda dapat melanjutkan percakapan tanpa kehilangan pesan sebelumnya.
 """)
