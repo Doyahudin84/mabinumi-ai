@@ -1,32 +1,26 @@
 import streamlit as st
-from transformers import BertTokenizer, BertForMaskedLM
+from transformers import T5Tokenizer, T5ForConditionalGeneration
 import torch
 
-# Load pre-trained BERT model and tokenizer
-tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-model = BertForMaskedLM.from_pretrained("bert-base-uncased")
+# Load pre-trained T5 model and tokenizer
+tokenizer = T5Tokenizer.from_pretrained("t5-small")
+model = T5ForConditionalGeneration.from_pretrained("t5-small")
 
-# Function to predict the masked word using BERT
-def predict_masked_word(text):
-    # Encode the text
-    inputs = tokenizer(text, return_tensors="pt")
+# Function to generate a response from T5
+def generate_response(input_text):
+    # Encode the input text for the model
+    inputs = tokenizer("generate: " + input_text, return_tensors="pt")
     
-    # Get predictions from BERT
+    # Get the model's prediction (output)
     with torch.no_grad():
-        outputs = model(**inputs)
+        outputs = model.generate(inputs["input_ids"], max_length=100)
     
-    # Get the logits for the masked token position
-    logits = outputs.logits
-    mask_token_index = torch.where(inputs.input_ids == tokenizer.mask_token_id)[1]
-    
-    # Get the predicted token
-    predicted_token_id = logits[0, mask_token_index, :].argmax(dim=-1)
-    predicted_token = tokenizer.decode(predicted_token_id)
-    
-    return predicted_token
+    # Decode the generated text and return the result
+    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return response
 
 # Streamlit UI
-st.title("AI Asisten dengan BERT")
+st.title("AI Asisten dengan T5")
 st.write("Tanya saya sesuatu!")
 
 # Initialize session state to keep track of chat history
@@ -43,14 +37,11 @@ def display_history():
 user_input = st.text_input("Masukkan pertanyaan atau pernyataan:")
 
 if user_input:
-    # Modifikasi input agar ada token mask (contoh, menempatkan mask di tempat yang relevan)
-    mask_text = user_input + " [MASK]."  # Menambahkan mask di akhir kalimat untuk konteks yang lebih baik
-
-    # Predict the masked word
-    prediction = predict_masked_word(mask_text)
+    # Generate the response using T5
+    response = generate_response(user_input)
 
     # Save the user input and AI response in the chat history
-    st.session_state.history.append({"user": user_input, "ai": prediction})
+    st.session_state.history.append({"user": user_input, "ai": response})
 
     # Display the updated chat history
     display_history()
