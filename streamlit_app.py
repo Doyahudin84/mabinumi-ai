@@ -1,39 +1,37 @@
 import streamlit as st
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
+from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
 
-# Memuat model dan tokenizer GPT-J dari Hugging Face
-model_name = "EleutherAI/gpt-j-6B"
-model = AutoModelForCausalLM.from_pretrained(model_name)
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# Inisialisasi model GPT-Neo dari Hugging Face
+@st.cache_resource  # Cache untuk menyimpan model dan tokenizer agar tidak dimuat ulang
+def load_model():
+    # Menggunakan GPT-Neo 1.3B
+    model = GPT2LMHeadModel.from_pretrained("EleutherAI/gpt-neo-1.3B")
+    tokenizer = GPT2Tokenizer.from_pretrained("EleutherAI/gpt-neo-1.3B")
+    generator = pipeline('text-generation', model=model, tokenizer=tokenizer)
+    return generator
 
-# Fungsi untuk menghasilkan teks menggunakan GPT-J
-def generate_text(prompt, max_length=200):
-    # Tokenisasi input
-    inputs = tokenizer(prompt, return_tensors="pt")
-    
-    # Menghasilkan teks dari model GPT-J
-    with torch.no_grad():
-        outputs = model.generate(inputs['input_ids'], max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2, temperature=0.7)
+# Load model
+generator = load_model()
 
-    # Decode hasil output menjadi teks
-    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    
-    return generated_text
+# Streamlit Interface
+st.title("GPT-Neo AI Assistant")
+st.write("Masukkan teks untuk mendapatkan respon dari GPT-Neo.")
 
-# Membuat tampilan aplikasi Streamlit
-st.title("GPT-J Text Generator")
-st.write("Gunakan GPT-J untuk menghasilkan teks kreatif berdasarkan prompt Anda!")
+# User input untuk prompt
+user_input = st.text_area("Tulis teks di sini:", "")
 
-# Input prompt dari pengguna
-prompt = st.text_area("Masukkan prompt atau kalimat awal:", "Halo, bagaimana kabarmu hari ini?")
-
-# Tombol untuk menghasilkan teks
-if st.button("Hasilkan Teks"):
-    if prompt:
-        # Menampilkan hasil yang dihasilkan oleh GPT-J
-        generated_text = generate_text(prompt)
-        st.subheader("Teks yang Dihasilkan:")
+# Menampilkan hasil jika ada input
+if user_input:
+    with st.spinner("Menghasilkan teks..."):
+        result = generator(user_input, max_length=100, num_return_sequences=1)
+        generated_text = result[0]['generated_text']
+        st.subheader("Hasil Output:")
         st.write(generated_text)
-    else:
-        st.warning("Masukkan prompt untuk menghasilkan teks!")
+
+# Menambahkan penjelasan atau instruksi tambahan
+st.markdown("""
+    **Cara Kerja**:
+    1. Masukkan prompt atau teks apapun di area input.
+    2. GPT-Neo akan menghasilkan teks berdasarkan prompt tersebut.
+    3. Anda bisa eksperimen dengan berbagai jenis input untuk melihat hasil yang berbeda.
+""")
