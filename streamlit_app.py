@@ -1,47 +1,33 @@
 import streamlit as st
-from transformers import T5Tokenizer, T5ForConditionalGeneration
-import torch
+from transformers import BartTokenizer, BartForConditionalGeneration
 
-# Load pre-trained T5 model and tokenizer
-tokenizer = T5Tokenizer.from_pretrained("t5-small")
-model = T5ForConditionalGeneration.from_pretrained("t5-small")
+# Load pre-trained BART model and tokenizer
+tokenizer = BartTokenizer.from_pretrained("facebook/bart-large-cnn")
+model = BartForConditionalGeneration.from_pretrained("facebook/bart-large-cnn")
 
-# Function to generate a response from T5
-def generate_response(input_text):
-    # Encode the input text for the model
-    inputs = tokenizer("generate: " + input_text, return_tensors="pt")
+# Function to generate text based on input prompt
+def generate_text(prompt):
+    # Encode the prompt for the model
+    inputs = tokenizer(prompt, return_tensors="pt", truncation=True, padding=True, max_length=512)
     
-    # Get the model's prediction (output)
+    # Generate the output text
     with torch.no_grad():
-        outputs = model.generate(inputs["input_ids"], max_length=100)
+        outputs = model.generate(inputs["input_ids"], max_length=150, num_beams=5, early_stopping=True)
     
-    # Decode the generated text and return the result
-    response = tokenizer.decode(outputs[0], skip_special_tokens=True)
-    return response
+    # Decode and return the generated text
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return generated_text
 
 # Streamlit UI
-st.title("AI Asisten dengan T5")
-st.write("Tanya saya sesuatu!")
+st.title("AI Asisten dengan BART")
+st.write("Masukkan prompt untuk menghasilkan teks!")
 
-# Initialize session state to keep track of chat history
-if 'history' not in st.session_state:
-    st.session_state.history = []
-
-# Function to display chat history
-def display_history():
-    for message in st.session_state.history:
-        st.write(f"**User**: {message['user']}")
-        st.write(f"**AI**: {message['ai']}")
-
-# User input text
-user_input = st.text_input("Masukkan pertanyaan atau pernyataan:")
+# Input: User provides a prompt
+user_input = st.text_input("Masukkan prompt atau pertanyaan:")
 
 if user_input:
-    # Generate the response using T5
-    response = generate_response(user_input)
+    # Generate text based on the input prompt
+    generated_text = generate_text(user_input)
 
-    # Save the user input and AI response in the chat history
-    st.session_state.history.append({"user": user_input, "ai": response})
-
-    # Display the updated chat history
-    display_history()
+    # Display the generated text as the AI response
+    st.write(f"**AI**: {generated_text}")
