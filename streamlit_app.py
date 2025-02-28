@@ -43,8 +43,8 @@ def display_history():
 user_input = st.text_input("Masukkan pertanyaan atau pernyataan:")
 
 if user_input:
-    # Modify input text for the model to handle
-    mask_text = user_input + " [MASK]"
+    # Modifikasi input agar ada token mask (contoh, menempatkan mask di tempat yang relevan)
+    mask_text = user_input + " [MASK]."  # Menambahkan mask di akhir kalimat untuk konteks yang lebih baik
 
     # Predict the masked word
     prediction = predict_masked_word(mask_text)
