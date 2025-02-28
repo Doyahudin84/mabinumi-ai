@@ -6,7 +6,7 @@ import torch
 device = 0 if torch.cuda.is_available() else -1  # Gunakan GPU jika tersedia
 
 # Inisialisasi pipeline dengan model yang lebih ringan (distilgpt2)
-assistant = pipeline("text-generation", model="distilgpt2", device=device)
+assistant = pipeline("text-generation", model="gpt2", device=device)
 
 # Judul aplikasi
 st.title("AI Asisten Pembelajaran")
