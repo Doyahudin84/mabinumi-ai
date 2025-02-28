@@ -1,11 +1,12 @@
 import streamlit as st
 from transformers import GPT2LMHeadModel, GPT2Tokenizer, pipeline
+from transformers import GPTNeoForCausalLM
 
 # Load GPT-Neo Model dan Tokenizer
 @st.cache_resource
 def load_model():
     try:
-        model = GPT2LMHeadModel.from_pretrained("EleutherAI/gpt-neo-1.3B")
+        model = GPTNeoForCausalLM.from_pretrained("EleutherAI/gpt-neo-1.3B")
     except ImportError as e:
         print("Import error: ", e)
         # You could also log this to a file if needed
