@@ -1,29 +1,39 @@
 import streamlit as st
-from transformers import pipeline
-
-# Pastikan PyTorch terinstal dan mendeteksi perangkat yang digunakan
+from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
-device = 0 if torch.cuda.is_available() else -1  # Gunakan GPU jika tersedia
 
-# Inisialisasi pipeline dengan model yang lebih ringan (distilgpt2)
-assistant = pipeline("text-generation", model="gpt2", device=device)
+# Memuat model dan tokenizer GPT-J dari Hugging Face
+model_name = "EleutherAI/gpt-j-6B"
+model = AutoModelForCausalLM.from_pretrained(model_name)
+tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-# Judul aplikasi
-st.title("AI Asisten Pembelajaran")
-
-# Deskripsi aplikasi
-st.write("""
-AI Asisten Pembelajaran:  
-Halo! Saya di sini untuk membantu Anda belajar. Ketikkan pertanyaan atau topik yang ingin Anda bahas, dan saya akan memberikan jawaban berbasis AI.
-""")
-
-# Input dari pengguna
-user_input = st.text_input("Tanyakan sesuatu:", "")
-
-if user_input:
-    # Generate response dari AI
-    response = assistant(user_input, max_length=150, num_return_sequences=1)
-    ai_reply = response[0]['generated_text']
+# Fungsi untuk menghasilkan teks menggunakan GPT-J
+def generate_text(prompt, max_length=200):
+    # Tokenisasi input
+    inputs = tokenizer(prompt, return_tensors="pt")
     
-    # Menampilkan jawaban dari AI
-    st.write(f"**AI Asisten Pembelajaran**: {ai_reply.strip()}")
+    # Menghasilkan teks dari model GPT-J
+    with torch.no_grad():
+        outputs = model.generate(inputs['input_ids'], max_length=max_length, num_return_sequences=1, no_repeat_ngram_size=2, temperature=0.7)
+
+    # Decode hasil output menjadi teks
+    generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    
+    return generated_text
+
+# Membuat tampilan aplikasi Streamlit
+st.title("GPT-J Text Generator")
+st.write("Gunakan GPT-J untuk menghasilkan teks kreatif berdasarkan prompt Anda!")
+
+# Input prompt dari pengguna
+prompt = st.text_area("Masukkan prompt atau kalimat awal:", "Halo, bagaimana kabarmu hari ini?")
+
+# Tombol untuk menghasilkan teks
+if st.button("Hasilkan Teks"):
+    if prompt:
+        # Menampilkan hasil yang dihasilkan oleh GPT-J
+        generated_text = generate_text(prompt)
+        st.subheader("Teks yang Dihasilkan:")
+        st.write(generated_text)
+    else:
+        st.warning("Masukkan prompt untuk menghasilkan teks!")
