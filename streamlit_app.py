@@ -13,19 +13,27 @@ def load_data():
     uploaded_file = st.file_uploader("Upload File Excel", type=["xlsx", "xls"])
     if uploaded_file is not None:
         data = pd.read_excel(uploaded_file)
+        st.write("Data loaded successfully.")
+        st.dataframe(data.head())  # Displaying first few rows of data
         return data
     else:
         return None
 
 # Fungsi untuk mengonversi nilai numerik menjadi kategori
 def convert_to_category(data, threshold):
-    # Jika final_grade berupa numerik, ubah menjadi kategori
-    if data['final_grade'].dtype in ['int64', 'float64']:
-        data['final_grade'] = data['final_grade'].apply(lambda x: 'Lulus' if x > threshold else 'Tidak Lulus')
+    if 'final_grade' in data.columns:
+        if data['final_grade'].dtype in ['int64', 'float64']:
+            data['final_grade'] = data['final_grade'].apply(lambda x: 'Lulus' if x > threshold else 'Tidak Lulus')
+    else:
+        st.error("Target column 'final_grade' not found.")
     return data
 
 # Fungsi pra-pemrosesan data
 def preprocess_data(data, target_column):
+    if target_column not in data.columns:
+        st.error(f"Target column '{target_column}' not found in the dataset.")
+        return None, None, None, None
+    
     X = data.drop(columns=[target_column])  # Fitur
     y = data[target_column]  # Target
     # Pembagian data menjadi data latih dan data uji
@@ -78,7 +86,7 @@ def plot_results(predictions, y_test, model_type):
         plt.xlabel("True Values")
         plt.ylabel("Predictions")
         plt.title("Classification Predictions vs Actual Values")
-    plt.show()
+    st.pyplot(plt.gcf())
 
 # Wrapper utama untuk analisis
 def analyze_data(model_type="regression"):
@@ -100,18 +108,21 @@ def analyze_data(model_type="regression"):
     if target_column:
         X_train, X_test, y_train, y_test = preprocess_data(data, target_column)
 
+        if X_train is None:
+            return  # Stop if preprocessing fails
+
         if model_type == "regression":
             model_choice = st.selectbox("Pilih model untuk regresi:", ["random_forest", "svm", "knn"])
             mse, predictions = regress_data(X_train, X_test, y_train, y_test, model_choice)
             st.write(f"Mean Squared Error: {mse:.2f}")
             st.write(f"Predictions vs Actual: {list(zip(predictions, y_test))}")
-            st.pyplot(plt.gcf())
+            plot_results(predictions, y_test, "regression")
         elif model_type == "classification":
             model_choice = st.selectbox("Pilih model untuk klasifikasi:", ["random_forest", "svm", "knn"])
             accuracy, predictions = classify_data(X_train, X_test, y_train, y_test, model_choice)
             st.write(f"Accuracy: {accuracy:.2f}")
             st.write(f"Predictions vs Actual: {list(zip(predictions, y_test))}")
-            st.pyplot(plt.gcf())
+            plot_results(predictions, y_test, "classification")
 
 # Menjalankan aplikasi Streamlit
 if __name__ == "__main__":
