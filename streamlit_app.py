@@ -34,8 +34,11 @@ def preprocess_data(data, target_column):
         st.error(f"Target column '{target_column}' not found in the dataset.")
         return None, None, None, None
     
+    # Handling missing values
+    data = data.dropna(subset=[target_column])  # Drop rows where target column is missing
     X = data.drop(columns=[target_column])  # Fitur
     y = data[target_column]  # Target
+
     # Pembagian data menjadi data latih dan data uji
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     # Standarisasi data
@@ -75,7 +78,7 @@ def classify_data(X_train, X_test, y_train, y_test, model_type="random_forest"):
 # Fungsi untuk visualisasi hasil
 def plot_results(predictions, y_test, model_type):
     plt.figure(figsize=(10,6))
-    if model_type in ["regression", "svm", "knn"]:  # Model regresi
+    if model_type == "regression":  # Model regresi
         plt.scatter(y_test, predictions)
         plt.plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], color='red', linestyle='--')
         plt.xlabel("True Values")
