@@ -126,6 +126,6 @@ def analyze_data(model_type="regression"):
 
 # Menjalankan aplikasi Streamlit
 if __name__ == "__main__":
-    st.title("AI Wrapper untuk Analisis Pendidikan")
+    st.title("AI Wrapper untuk Analisis Pendidikan by Doyahudin")
     model_type = st.selectbox("Pilih jenis model:", ["regression", "classification"])
     analyze_data(model_type)
